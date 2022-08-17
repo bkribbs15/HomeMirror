@@ -1,12 +1,12 @@
-/* Magic Mirror
+/* MagicMirror²
  * Utils
  *
  * By Rodrigo Ramírez Norambuena https://rodrigoramirez.com
  * MIT Licensed.
  */
-var colors = require("colors/safe");
+const colors = require("colors/safe");
 
-var Utils = {
+module.exports = {
 	colors: {
 		warn: colors.yellow,
 		error: colors.red,
@@ -14,7 +14,3 @@ var Utils = {
 		pass: colors.green
 	}
 };
-
-if (typeof module !== "undefined") {
-	module.exports = Utils;
-}

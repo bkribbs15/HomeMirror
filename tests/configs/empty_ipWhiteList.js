@@ -1,24 +1,11 @@
-/* Magic Mirror Test config sample ipWhitelist
+/* MagicMirror² Test config sample ipWhitelist
  *
  * By Rodrigo Ramírez Norambuena https://rodrigoramirez.com
  * MIT Licensed.
  */
-
-var config = {
-	port: 8080,
-	ipWhitelist: [],
-
-	language: "en",
-	timeFormat: 24,
-	units: "metric",
-	electronOptions: {
-		webPreferences: {
-			nodeIntegration: true
-		}
-	},
-
-	modules: []
-};
+let config = require(process.cwd() + "/tests/configs/default.js").configFactory({
+	ipWhitelist: []
+});
 
 /*************** DO NOT EDIT THE LINE BELOW ***************/
 if (typeof module !== "undefined") {

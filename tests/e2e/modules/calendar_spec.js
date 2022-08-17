@@ -1,142 +1,162 @@
 const helpers = require("../global-setup");
-const serverBasicAuth = require("../../servers/basic-auth.js");
-const expect = require("chai").expect;
-
-const describe = global.describe;
-const it = global.it;
-const beforeEach = global.beforeEach;
-const afterEach = global.afterEach;
+const serverBasicAuth = require("./basic-auth.js");
 
 describe("Calendar module", function () {
-	helpers.setupTimeout(this);
+	/**
+	 * @param {string} element css selector
+	 * @param {string} result expected number
+	 * @param {string} not reverse result
+	 */
+	function testElementLength(element, result, not) {
+		helpers.waitForElement(element).then((elem) => {
+			expect(elem).not.toBe(null);
+			if (not === "not") {
+				expect(elem.length).not.toBe(result);
+			} else {
+				expect(elem.length).toBe(result);
+			}
+		});
+	}
 
-	var app = null;
+	const testTextContain = function (element, text) {
+		helpers.waitForElement(element).then((elem) => {
+			expect(elem).not.toBe(null);
+			expect(elem.textContent).toContain(text);
+		});
+	};
 
-	beforeEach(function () {
-		return helpers
-			.startApplication({
-				args: ["js/electron.js"]
-			})
-			.then(function (startedApp) {
-				app = startedApp;
-			});
-	});
-
-	afterEach(function () {
-		return helpers.stopApplication(app);
+	afterAll(async function () {
+		await helpers.stopApplication();
 	});
 
 	describe("Default configuration", function () {
-		before(function () {
-			// Set config sample for use in test
-			process.env.MM_CONFIG_FILE = "tests/configs/modules/calendar/default.js";
+		beforeAll(function (done) {
+			helpers.startApplication("tests/configs/modules/calendar/default.js");
+			helpers.getDocument(done);
 		});
 
-		it("should show the default maximumEntries of 10", async () => {
-			await app.client.waitUntilTextExists(".calendar", "TestEvent", 10000);
-			const events = await app.client.$$(".calendar .event");
-			return expect(events.length).equals(10);
+		it("should show the default maximumEntries of 10", () => {
+			testElementLength(".calendar .event", 10);
 		});
 
-		it("should show the default calendar symbol in each event", async () => {
-			await app.client.waitUntilTextExists(".calendar", "TestEvent", 10000);
-			const icons = await app.client.$$(".calendar .event .fa-calendar");
-			return expect(icons.length).not.equals(0);
+		it("should show the default calendar symbol in each event", () => {
+			testElementLength(".calendar .event .fa-calendar-alt", 0, "not");
 		});
 	});
 
 	describe("Custom configuration", function () {
-		before(function () {
-			// Set config sample for use in test
-			process.env.MM_CONFIG_FILE = "tests/configs/modules/calendar/custom.js";
+		beforeAll(function (done) {
+			helpers.startApplication("tests/configs/modules/calendar/custom.js");
+			helpers.getDocument(done);
 		});
 
-		it("should show the custom maximumEntries of 4", async () => {
-			await app.client.waitUntilTextExists(".calendar", "TestEvent", 10000);
-			const events = await app.client.$$(".calendar .event");
-			return expect(events.length).equals(4);
+		it("should show the custom maximumEntries of 4", () => {
+			testElementLength(".calendar .event", 4);
 		});
 
-		it("should show the custom calendar symbol in each event", async () => {
-			await app.client.waitUntilTextExists(".calendar", "TestEvent", 10000);
-			const icons = await app.client.$$(".calendar .event .fa-birthday-cake");
-			return expect(icons.length).equals(4);
+		it("should show the custom calendar symbol in each event", () => {
+			testElementLength(".calendar .event .fa-birthday-cake", 4);
 		});
 
-		it("should show two custom icons for repeating events", async () => {
-			await app.client.waitUntilTextExists(".calendar", "TestEventRepeat", 10000);
-			const icons = await app.client.$$(".calendar .event .fa-undo");
-			return expect(icons.length).equals(2);
+		it("should show two custom icons for repeating events", () => {
+			testElementLength(".calendar .event .fa-undo", 2);
 		});
 
-		it("should show two custom icons for day events", async () => {
-			await app.client.waitUntilTextExists(".calendar", "TestEventDay", 10000);
-			const icons = await app.client.$$(".calendar .event .fa-calendar-day");
-			return expect(icons.length).equals(2);
+		it("should show two custom icons for day events", () => {
+			testElementLength(".calendar .event .fa-calendar-day", 2);
+		});
+	});
+
+	describe("Recurring event", function () {
+		beforeAll(function (done) {
+			helpers.startApplication("tests/configs/modules/calendar/recurring.js");
+			helpers.getDocument(done);
+		});
+
+		it("should show the recurring birthday event 6 times", () => {
+			testElementLength(".calendar .event", 6);
+		});
+	});
+
+	process.setMaxListeners(0);
+	for (let i = -12; i < 12; i++) {
+		describe("Recurring event per timezone", function () {
+			beforeAll(function (done) {
+				Date.prototype.getTimezoneOffset = function () {
+					return i * 60;
+				};
+				helpers.startApplication("tests/configs/modules/calendar/recurring.js");
+				helpers.getDocument(done);
+			});
+
+			it('should contain text "Mar 25th" in timezone UTC ' + -i, () => {
+				testTextContain(".calendar", "Mar 25th");
+			});
+		});
+	}
+
+	describe("Changed port", function () {
+		beforeAll(function (done) {
+			helpers.startApplication("tests/configs/modules/calendar/changed-port.js");
+			serverBasicAuth.listen(8010);
+			helpers.getDocument(done);
+		});
+
+		afterAll(function (done) {
+			serverBasicAuth.close(done());
+		});
+
+		it("should return TestEvents", function () {
+			testElementLength(".calendar .event", 0, "not");
 		});
 	});
 
 	describe("Basic auth", function () {
-		before(function () {
-			serverBasicAuth.listen(8010);
-			// Set config sample for use in test
-			process.env.MM_CONFIG_FILE = "tests/configs/modules/calendar/basic-auth.js";
-		});
-
-		after(function (done) {
-			serverBasicAuth.close(done());
+		beforeAll(function (done) {
+			helpers.startApplication("tests/configs/modules/calendar/basic-auth.js");
+			helpers.getDocument(done);
 		});
 
 		it("should return TestEvents", function () {
-			return app.client.waitUntilTextExists(".calendar", "TestEvent", 10000);
+			testElementLength(".calendar .event", 0, "not");
 		});
 	});
 
 	describe("Basic auth by default", function () {
-		before(function () {
-			serverBasicAuth.listen(8011);
-			// Set config sample for use in test
-			process.env.MM_CONFIG_FILE = "tests/configs/modules/calendar/auth-default.js";
-		});
-
-		after(function (done) {
-			serverBasicAuth.close(done());
+		beforeAll(function (done) {
+			helpers.startApplication("tests/configs/modules/calendar/auth-default.js");
+			helpers.getDocument(done);
 		});
 
 		it("should return TestEvents", function () {
-			return app.client.waitUntilTextExists(".calendar", "TestEvent", 10000);
+			testElementLength(".calendar .event", 0, "not");
 		});
 	});
 
 	describe("Basic auth backward compatibility configuration: DEPRECATED", function () {
-		before(function () {
-			serverBasicAuth.listen(8012);
-			// Set config sample for use in test
-			process.env.MM_CONFIG_FILE = "tests/configs/modules/calendar/old-basic-auth.js";
-		});
-
-		after(function (done) {
-			serverBasicAuth.close(done());
+		beforeAll(function (done) {
+			helpers.startApplication("tests/configs/modules/calendar/old-basic-auth.js");
+			helpers.getDocument(done);
 		});
 
 		it("should return TestEvents", function () {
-			return app.client.waitUntilTextExists(".calendar", "TestEvent", 10000);
+			testElementLength(".calendar .event", 0, "not");
 		});
 	});
 
 	describe("Fail Basic auth", function () {
-		before(function () {
+		beforeAll(function (done) {
+			helpers.startApplication("tests/configs/modules/calendar/fail-basic-auth.js");
 			serverBasicAuth.listen(8020);
-			// Set config sample for use in test
-			process.env.MM_CONFIG_FILE = "tests/configs/modules/calendar/fail-basic-auth.js";
+			helpers.getDocument(done);
 		});
 
-		after(function (done) {
+		afterAll(function (done) {
 			serverBasicAuth.close(done());
 		});
 
-		it("should return No upcoming events", function () {
-			return app.client.waitUntilTextExists(".calendar", "No upcoming events.", 10000);
+		it("should show Unauthorized error", function () {
+			testTextContain(".calendar", "Error in the calendar module. Authorization failed");
 		});
 	});
 });

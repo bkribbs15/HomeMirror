@@ -1,3 +1,7 @@
+Hello and thank you for opening an issue.
+
+**Please make sure that you have read the following lines before submitting your Issue:**
+
 ## I'm not sure if this is a bug
 
 If you're not sure if it's a real bug or if it's just you, please open a topic on the forum: [https://forum.magicmirror.builders/category/15/bug-hunt](https://forum.magicmirror.builders/category/15/bug-hunt)
@@ -6,15 +10,19 @@ If you're not sure if it's a real bug or if it's just you, please open a topic o
 
 Problems installing or configuring your MagicMirror? Check out: [https://forum.magicmirror.builders/category/10/troubleshooting](https://forum.magicmirror.builders/category/10/troubleshooting)
 
-## I found a bug in the MagicMirror installer
+A common problem is that your config file could be invalid. Please run in your MagicMirror² directory: `npm run config:check` and see if it reports an error.
 
-If you are facing an issue or found a bug while trying to install MagicMirror via the installer please report it in the respective GitHub repository:
+## I found a bug in the MagicMirror² installer
+
+If you are facing an issue or found a bug while trying to install MagicMirror² via the installer please report it in the respective GitHub repository:
 [https://github.com/sdetweil/MagicMirror_scripts](https://github.com/sdetweil/MagicMirror_scripts)
 
-## I found a bug in the MagicMirror Docker image
+## I found a bug in the MagicMirror² Docker image
 
-If you are facing an issue or found a bug while running MagicMirror inside a Docker container please create an issue in the GitHub repository of the MagicMirror Docker image:
-[https://github.com/bastilimbach/docker-MagicMirror](https://github.com/bastilimbach/docker-MagicMirror)
+If you are facing an issue or found a bug while running MagicMirror² inside a Docker container please create an issue in the corresponding repository:
+
+- karsten13/magicmirror: [https://gitlab.com/khassel/magicmirror](https://gitlab.com/khassel/magicmirror)
+- (deprecated) bastilimbach/docker-magicmirror: [https://github.com/bastilimbach/docker-MagicMirror](https://github.com/bastilimbach/docker-MagicMirror)
 
 ---
 
@@ -23,11 +31,11 @@ If you are facing an issue or found a bug while running MagicMirror inside a Doc
 Please make sure to only submit reproducible issues. You can safely remove everything above the dividing line.
 When submitting a new issue, please supply the following information:
 
-**Platform**: Place your platform here... give us your web browser/Electron version _and_ your hardware (Raspberry Pi 2/3, Windows, Mac, Linux, System V UNIX).
+**Platform**: Place your platform here... give us your web browser/Electron version _and_ your hardware (Raspberry Pi 2/3/4, Windows, Mac, Linux, System V UNIX).
 
-**Node Version**: Make sure it's version 8 or later.
+**Node Version**: Make sure it's version 14 or later (recommended is 16).
 
-**MagicMirror Version**: Please let us now which version of MagicMirror you are running. It can be found in the `package.log` file.
+**MagicMirror² Version**: Please let us know which version of MagicMirror² you are running. It can be found in the `package.json` file.
 
 **Description**: Provide a detailed description about the issue and include specific details to help us understand the problem. Adding screenshots will help describing the problem.
 

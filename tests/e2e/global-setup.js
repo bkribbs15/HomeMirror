@@ -1,61 +1,54 @@
-/*
- * Magic Mirror
- *
- * Global Setup Test Suite
- *
- * By Rodrigo Ramírez Norambuena https://rodrigoramirez.com
- * MIT Licensed.
- *
- */
+const jsdom = require("jsdom");
 
-const Application = require("spectron").Application;
-const assert = require("assert");
-const chai = require("chai");
-const chaiAsPromised = require("chai-as-promised");
-const path = require("path");
-
-global.before(function () {
-	chai.should();
-	chai.use(chaiAsPromised);
-});
-
-exports.getElectronPath = function () {
-	var electronPath = path.join(__dirname, "..", "..", "node_modules", ".bin", "electron");
-	if (process.platform === "win32") {
-		electronPath += ".cmd";
-	}
-	return electronPath;
-};
-
-// Set timeout - if this is run within Travis, increase timeout
-exports.setupTimeout = function (test) {
-	if (process.env.CI) {
-		test.timeout(30000);
+exports.startApplication = function (configFilename, exec) {
+	jest.resetModules();
+	this.stopApplication();
+	// Set config sample for use in test
+	if (configFilename === "") {
+		process.env.MM_CONFIG_FILE = "config/config.js";
 	} else {
-		test.timeout(10000);
+		process.env.MM_CONFIG_FILE = configFilename;
 	}
+	if (exec) exec;
+	global.app = require("app.js");
+	global.app.start();
 };
 
-exports.startApplication = function (options) {
-	options.path = exports.getElectronPath();
-	if (process.env.CI) {
-		options.startTimeout = 30000;
+exports.stopApplication = async function () {
+	if (global.app) {
+		global.app.stop();
 	}
+	await new Promise((resolve) => setTimeout(resolve, 100));
+};
 
-	var app = new Application(options);
-	return app.start().then(function () {
-		assert.equal(app.isRunning(), true);
-		chaiAsPromised.transferPromiseness = app.transferPromiseness;
-		return app;
+exports.getDocument = function (callback) {
+	const url = "http://" + (config.address || "localhost") + ":" + (config.port || "8080");
+	jsdom.JSDOM.fromURL(url, { resources: "usable", runScripts: "dangerously" }).then((dom) => {
+		dom.window.name = "jsdom";
+		dom.window.onload = function () {
+			global.MutationObserver = dom.window.MutationObserver;
+			global.document = dom.window.document;
+			callback();
+		};
 	});
 };
 
-exports.stopApplication = function (app) {
-	if (!app || !app.isRunning()) {
-		return;
-	}
+exports.waitForElement = function (selector) {
+	return new Promise((resolve) => {
+		if (document.querySelector(selector) && document.querySelector(selector).value !== undefined) {
+			return resolve(document.querySelector(selector));
+		}
 
-	return app.stop().then(function () {
-		assert.equal(app.isRunning(), false);
+		const observer = new MutationObserver(() => {
+			if (document.querySelector(selector) && document.querySelector(selector).value !== undefined) {
+				resolve(document.querySelector(selector));
+				observer.disconnect();
+			}
+		});
+
+		observer.observe(document.body, {
+			childList: true,
+			subtree: true
+		});
 	});
 };

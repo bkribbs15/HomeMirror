@@ -1,36 +1,83 @@
 const helpers = require("../global-setup");
 
-const describe = global.describe;
-const it = global.it;
-const beforeEach = global.beforeEach;
-const afterEach = global.afterEach;
-
 describe("Newsfeed module", function () {
-	helpers.setupTimeout(this);
-
-	var app = null;
-
-	beforeEach(function () {
-		return helpers
-			.startApplication({
-				args: ["js/electron.js"]
-			})
-			.then(function (startedApp) {
-				app = startedApp;
-			});
-	});
-
-	afterEach(function () {
-		return helpers.stopApplication(app);
+	afterAll(async function () {
+		await helpers.stopApplication();
 	});
 
 	describe("Default configuration", function () {
-		before(function () {
-			process.env.MM_CONFIG_FILE = "tests/configs/modules/newsfeed/default.js";
+		beforeAll(function (done) {
+			helpers.startApplication("tests/configs/modules/newsfeed/default.js");
+			helpers.getDocument(done);
 		});
 
-		it("show title newsfeed", function () {
-			return app.client.waitUntilTextExists(".newsfeed .small", "Rodrigo Ramirez Blog", 10000).should.be.fulfilled;
+		it("should show the newsfeed title", function () {
+			helpers.waitForElement(".newsfeed .newsfeed-source").then((elem) => {
+				expect(elem).not.toBe(null);
+				expect(elem.textContent).toContain("Rodrigo Ramirez Blog");
+			});
+		});
+
+		it("should show the newsfeed article", function () {
+			helpers.waitForElement(".newsfeed .newsfeed-title").then((elem) => {
+				expect(elem).not.toBe(null);
+				expect(elem.textContent).toContain("QPanel");
+			});
+		});
+
+		it("should NOT show the newsfeed description", () => {
+			helpers.waitForElement(".newsfeed .newsfeed-desc").then((elem) => {
+				expect(elem).toBe(null);
+			});
+		});
+	});
+
+	describe("Custom configuration", function () {
+		beforeAll(function (done) {
+			helpers.startApplication("tests/configs/modules/newsfeed/prohibited_words.js");
+			helpers.getDocument(done);
+		});
+
+		it("should not show articles with prohibited words", function () {
+			helpers.waitForElement(".newsfeed .newsfeed-title").then((elem) => {
+				expect(elem).not.toBe(null);
+				expect(elem.textContent).toContain("Problema VirtualBox");
+			});
+		});
+
+		it("should show the newsfeed description", () => {
+			helpers.waitForElement(".newsfeed .newsfeed-desc").then((elem) => {
+				expect(elem).not.toBe(null);
+				expect(elem.textContent.length).not.toBe(0);
+			});
+		});
+	});
+
+	describe("Invalid configuration", function () {
+		beforeAll(function (done) {
+			helpers.startApplication("tests/configs/modules/newsfeed/incorrect_url.js");
+			helpers.getDocument(done);
+		});
+
+		it("should show malformed url warning", function () {
+			helpers.waitForElement(".newsfeed .small").then((elem) => {
+				expect(elem).not.toBe(null);
+				expect(elem.textContent).toContain("Error in the Newsfeed module. Malformed url.");
+			});
+		});
+	});
+
+	describe("Ignore items", function () {
+		beforeAll(function (done) {
+			helpers.startApplication("tests/configs/modules/newsfeed/ignore_items.js");
+			helpers.getDocument(done);
+		});
+
+		it("should show empty items info message", function () {
+			helpers.waitForElement(".newsfeed .small").then((elem) => {
+				expect(elem).not.toBe(null);
+				expect(elem.textContent).toContain("No news at the moment.");
+			});
 		});
 	});
 });

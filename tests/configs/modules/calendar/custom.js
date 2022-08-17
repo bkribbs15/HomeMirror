@@ -1,19 +1,10 @@
-/* Magic Mirror Test config custom calendar
+/* MagicMirror² Test config custom calendar
  *
+ * By Rejas
  * MIT Licensed.
  */
 let config = {
-	port: 8080,
-	ipWhitelist: ["127.0.0.1", "::ffff:127.0.0.1", "::1"],
-
-	language: "en",
 	timeFormat: 12,
-	units: "metric",
-	electronOptions: {
-		webPreferences: {
-			nodeIntegration: true
-		}
-	},
 
 	modules: [
 		{
