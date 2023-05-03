@@ -4,57 +4,55 @@
  * By Michael Teeuw https://michaelteeuw.nl
  * MIT Licensed.
  */
-const Class = require("./class.js");
-const Log = require("logger");
 const express = require("express");
+const Log = require("logger");
+const Class = require("./class");
 
 const NodeHelper = Class.extend({
 	init() {
 		Log.log("Initializing new module helper ...");
 	},
 
-	loaded(callback) {
+	loaded() {
 		Log.log(`Module helper loaded: ${this.name}`);
-		callback();
 	},
 
 	start() {
 		Log.log(`Starting module helper: ${this.name}`);
 	},
 
-	/* stop()
+	/**
 	 * Called when the MagicMirror² server receives a `SIGINT`
 	 * Close any open connections, stop any sub-processes and
 	 * gracefully exit the module.
-	 *
 	 */
 	stop() {
 		Log.log(`Stopping module helper: ${this.name}`);
 	},
 
-	/* socketNotificationReceived(notification, payload)
+	/**
 	 * This method is called when a socket notification arrives.
 	 *
-	 * argument notification string - The identifier of the notification.
-	 * argument payload mixed - The payload of the notification.
+	 * @param {string} notification The identifier of the notification.
+	 * @param {*}  payload The payload of the notification.
 	 */
 	socketNotificationReceived(notification, payload) {
 		Log.log(`${this.name} received a socket notification: ${notification} - Payload: ${payload}`);
 	},
 
-	/* setName(name)
+	/**
 	 * Set the module name.
 	 *
-	 * argument name string - Module name.
+	 * @param {string} name Module name.
 	 */
 	setName(name) {
 		this.name = name;
 	},
 
-	/* setPath(path)
+	/**
 	 * Set the module path.
 	 *
-	 * argument path string - Module path.
+	 * @param {string} path Module path.
 	 */
 	setPath(path) {
 		this.path = path;
