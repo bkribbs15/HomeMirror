@@ -30,7 +30,9 @@
 }
 
 .weather .precipitation-amount,
-.weather .precipitation-prob {
+.weather .precipitation-prob,
+.weather .humidity-hourly,
+.weather .uv-index {
   padding-left: 20px;
   padding-right: 0;
 }

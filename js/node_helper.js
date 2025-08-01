@@ -1,23 +1,17 @@
-/* MagicMirror²
- * Node Helper Superclass
- *
- * By Michael Teeuw https://michaelteeuw.nl
- * MIT Licensed.
- */
 const express = require("express");
 const Log = require("logger");
 const Class = require("./class");
 
 const NodeHelper = Class.extend({
-	init() {
+	init () {
 		Log.log("Initializing new module helper ...");
 	},
 
-	loaded() {
+	loaded () {
 		Log.log(`Module helper loaded: ${this.name}`);
 	},
 
-	start() {
+	start () {
 		Log.log(`Starting module helper: ${this.name}`);
 	},
 
@@ -26,86 +20,75 @@ const NodeHelper = Class.extend({
 	 * Close any open connections, stop any sub-processes and
 	 * gracefully exit the module.
 	 */
-	stop() {
+	stop () {
 		Log.log(`Stopping module helper: ${this.name}`);
 	},
 
 	/**
 	 * This method is called when a socket notification arrives.
-	 *
 	 * @param {string} notification The identifier of the notification.
 	 * @param {*}  payload The payload of the notification.
 	 */
-	socketNotificationReceived(notification, payload) {
+	socketNotificationReceived (notification, payload) {
 		Log.log(`${this.name} received a socket notification: ${notification} - Payload: ${payload}`);
 	},
 
 	/**
 	 * Set the module name.
-	 *
 	 * @param {string} name Module name.
 	 */
-	setName(name) {
+	setName (name) {
 		this.name = name;
 	},
 
 	/**
 	 * Set the module path.
-	 *
 	 * @param {string} path Module path.
 	 */
-	setPath(path) {
+	setPath (path) {
 		this.path = path;
 	},
 
-	/* sendSocketNotification(notification, payload)
+	/*
+	 * sendSocketNotification(notification, payload)
 	 * Send a socket notification to the node helper.
 	 *
 	 * argument notification string - The identifier of the notification.
 	 * argument payload mixed - The payload of the notification.
 	 */
-	sendSocketNotification(notification, payload) {
+	sendSocketNotification (notification, payload) {
 		this.io.of(this.name).emit(notification, payload);
 	},
 
-	/* setExpressApp(app)
+	/*
+	 * setExpressApp(app)
 	 * Sets the express app object for this module.
 	 * This allows you to host files from the created webserver.
 	 *
 	 * argument app Express app - The Express app object.
 	 */
-	setExpressApp(app) {
+	setExpressApp (app) {
 		this.expressApp = app;
 
 		app.use(`/${this.name}`, express.static(`${this.path}/public`));
 	},
 
-	/* setSocketIO(io)
+	/*
+	 * setSocketIO(io)
 	 * Sets the socket io object for this module.
 	 * Binds message receiver.
 	 *
 	 * argument io Socket.io - The Socket io object.
 	 */
-	setSocketIO(io) {
+	setSocketIO (io) {
 		this.io = io;
 
 		Log.log(`Connecting socket for: ${this.name}`);
 
 		io.of(this.name).on("connection", (socket) => {
-			// add a catch all event.
-			const onevent = socket.onevent;
-			socket.onevent = function (packet) {
-				const args = packet.data || [];
-				onevent.call(this, packet); // original call
-				packet.data = ["*"].concat(args);
-				onevent.call(this, packet); // additional call to catch-all
-			};
-
 			// register catch all.
-			socket.on("*", (notification, payload) => {
-				if (notification !== "*") {
-					this.socketNotificationReceived(notification, payload);
-				}
+			socket.onAny((notification, payload) => {
+				this.socketNotificationReceived(notification, payload);
 			});
 		});
 	}
@@ -123,7 +106,6 @@ NodeHelper.checkFetchStatus = function (response) {
 /**
  * Look at the specified error and return an appropriate error type, that
  * can be translated to a detailed error message
- *
  * @param {Error} error the error from fetching something
  * @returns {string} the string of the detailed error message in the translations
  */

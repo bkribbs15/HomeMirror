@@ -1,25 +1,14 @@
 /* global SunCalc, WeatherUtils */
 
-/* MagicMirror²
- * Module: Weather
- *
- * By Michael Teeuw https://michaelteeuw.nl
- * MIT Licensed.
- *
- * This class is the blueprint for a day which includes weather information.
- *
- * Currently this is focused on the information which is necessary for the current weather.
- * As soon as we start implementing the forecast, mode properties will be added.
- */
-
 /**
  * @external Moment
  */
 class WeatherObject {
+
 	/**
 	 * Constructor for a WeatherObject
 	 */
-	constructor() {
+	constructor () {
 		this.date = null;
 		this.windSpeed = null;
 		this.windFromDirection = null;
@@ -36,7 +25,7 @@ class WeatherObject {
 		this.feelsLikeTemp = null;
 	}
 
-	cardinalWindDirection() {
+	cardinalWindDirection () {
 		if (this.windFromDirection > 11.25 && this.windFromDirection <= 33.75) {
 			return "NNE";
 		} else if (this.windFromDirection > 33.75 && this.windFromDirection <= 56.25) {
@@ -75,16 +64,15 @@ class WeatherObject {
 	/**
 	 * Determines if the sun sets or rises next. Uses the current time and not
 	 * the date from the weather-forecast.
-	 *
 	 * @param {Moment} date an optional date where you want to get the next
 	 * action for. Useful only in tests, defaults to the current time.
 	 * @returns {string} "sunset" or "sunrise"
 	 */
-	nextSunAction(date = moment()) {
+	nextSunAction (date = moment()) {
 		return date.isBetween(this.sunrise, this.sunset) ? "sunset" : "sunrise";
 	}
 
-	feelsLike() {
+	feelsLike () {
 		if (this.feelsLikeTemp) {
 			return this.feelsLikeTemp;
 		}
@@ -93,10 +81,9 @@ class WeatherObject {
 
 	/**
 	 * Checks if the weatherObject is at dayTime.
-	 *
 	 * @returns {boolean} true if it is at dayTime
 	 */
-	isDayTime() {
+	isDayTime () {
 		const now = !this.date ? moment() : this.date;
 		return now.isBetween(this.sunrise, this.sunset, undefined, "[]");
 	}
@@ -105,11 +92,10 @@ class WeatherObject {
 	 * Update the sunrise / sunset time depending on the location. This can be
 	 * used if your provider doesn't provide that data by itself. Then SunCalc
 	 * is used here to calculate them according to the location.
-	 *
 	 * @param {number} lat latitude
 	 * @param {number} lon longitude
 	 */
-	updateSunTime(lat, lon) {
+	updateSunTime (lat, lon) {
 		const now = !this.date ? new Date() : this.date.toDate();
 		const times = SunCalc.getTimes(now, lat, lon);
 		this.sunrise = moment(times.sunrise);
@@ -121,10 +107,9 @@ class WeatherObject {
 	 *
 	 * Before being handed to other modules, mutable values must be cloned safely.
 	 * Especially 'moment' object is not immutable, so original 'date', 'sunrise', 'sunset' could be corrupted or changed by other modules.
-	 *
 	 * @returns {object} plained object clone of original weatherObject
 	 */
-	simpleClone() {
+	simpleClone () {
 		const toFlat = ["date", "sunrise", "sunset"];
 		let clone = { ...this };
 		for (const prop of toFlat) {

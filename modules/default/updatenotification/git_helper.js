@@ -1,27 +1,28 @@
-const util = require("util");
-const exec = util.promisify(require("child_process").exec);
-const fs = require("fs");
-const path = require("path");
+const util = require("node:util");
+const exec = util.promisify(require("node:child_process").exec);
+const fs = require("node:fs");
+const path = require("node:path");
 const Log = require("logger");
 
 const BASE_DIR = path.normalize(`${__dirname}/../../../`);
 
 class GitHelper {
-	constructor() {
+	constructor () {
 		this.gitRepos = [];
+		this.gitResultList = [];
 	}
 
-	getRefRegex(branch) {
+	getRefRegex (branch) {
 		return new RegExp(`s*([a-z,0-9]+[.][.][a-z,0-9]+)  ${branch}`, "g");
 	}
 
-	async execShell(command) {
+	async execShell (command) {
 		const { stdout = "", stderr = "" } = await exec(command);
 
 		return { stdout, stderr };
 	}
 
-	async isGitRepo(moduleFolder) {
+	async isGitRepo (moduleFolder) {
 		const { stderr } = await this.execShell(`cd ${moduleFolder} && git remote -v`);
 
 		if (stderr) {
@@ -33,7 +34,7 @@ class GitHelper {
 		return true;
 	}
 
-	async add(moduleName) {
+	async add (moduleName) {
 		let moduleFolder = BASE_DIR;
 
 		if (moduleName !== "MagicMirror") {
@@ -58,7 +59,7 @@ class GitHelper {
 		}
 	}
 
-	async getStatusInfo(repo) {
+	async getStatusInfo (repo) {
 		let gitInfo = {
 			module: repo.module,
 			behind: 0, // commits behind
@@ -93,27 +94,30 @@ class GitHelper {
 		// ## develop...origin/develop
 		// ## master...origin/master [behind 8]
 		// ## master...origin/master [ahead 8, behind 1]
+		// ## HEAD (no branch)
 		status = status.match(/## (.*)\.\.\.([^ ]*)(?: .*behind (\d+))?/);
 		// examples for status:
 		// [ '## develop...origin/develop', 'develop', 'origin/develop' ]
 		// [ '## master...origin/master [behind 8]', 'master', 'origin/master', '8' ]
 		// [ '## master...origin/master [ahead 8, behind 1]', 'master', 'origin/master', '1' ]
-		gitInfo.current = status[1];
-		gitInfo.tracking = status[2];
+		if (status) {
+			gitInfo.current = status[1];
+			gitInfo.tracking = status[2];
 
-		if (status[3]) {
-			// git fetch was already called before so `git status -sb` delivers already the behind number
-			gitInfo.behind = parseInt(status[3]);
-			gitInfo.isBehindInStatus = true;
+			if (status[3]) {
+				// git fetch was already called before so `git status -sb` delivers already the behind number
+				gitInfo.behind = parseInt(status[3]);
+				gitInfo.isBehindInStatus = true;
+			}
 		}
 
 		return gitInfo;
 	}
 
-	async getRepoInfo(repo) {
+	async getRepoInfo (repo) {
 		const gitInfo = await this.getStatusInfo(repo);
 
-		if (!gitInfo) {
+		if (!gitInfo || !gitInfo.current) {
 			return;
 		}
 
@@ -124,7 +128,7 @@ class GitHelper {
 		const { stderr } = await this.execShell(`cd ${repo.folder} && git fetch -n --dry-run`);
 
 		// example output:
-		// From https://github.com/MichMich/MagicMirror
+		// From https://github.com/MagicMirrorOrg/MagicMirror
 		//    e40ddd4..06389e3  develop    -> origin/develop
 		// here the result is in stderr (this is a git default, don't ask why ...)
 		const matches = stderr.match(this.getRefRegex(gitInfo.current));
@@ -170,22 +174,39 @@ class GitHelper {
 		}
 	}
 
-	async getRepos() {
-		const gitResultList = [];
+	async getRepos () {
+		this.gitResultList = [];
 
 		for (const repo of this.gitRepos) {
 			try {
 				const gitInfo = await this.getRepoInfo(repo);
 
 				if (gitInfo) {
-					gitResultList.push(gitInfo);
+					this.gitResultList.push(gitInfo);
 				}
 			} catch (e) {
 				Log.error(`Failed to retrieve repo info for ${repo.module}: ${e}`);
 			}
 		}
 
-		return gitResultList;
+		return this.gitResultList;
+	}
+
+	async checkUpdates () {
+		var updates = [];
+
+		const allRepos = await this.gitResultList.map((module) => {
+			return new Promise((resolve) => {
+				if (module.behind > 0 && module.module !== "MagicMirror") {
+					Log.info(`Update found for module: ${module.module}`);
+					updates.push(module);
+				}
+				resolve(module);
+			});
+		});
+		await Promise.all(allRepos);
+
+		return updates;
 	}
 }
 
